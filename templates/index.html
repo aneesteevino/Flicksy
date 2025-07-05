@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieMatch | Smart Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary: #e50914;
+            --dark: #141414;
+            --light: #f5f5f1;
+            --dark-gray: #181818;
+            --medium-gray: #222222;
+            --light-gray: #303030;
+            --gradient-dark: linear-gradient(145deg, #0a0a0a, #1c1c1c);
+            --shadow-elevation: 0 10px 30px -15px rgba(0, 0, 0, 0.8);
+            --glow: 0 0 10px rgba(229, 9, 20, 0.6);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1c1c1c 100%);
+            color: var(--light);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(0,0,0,0.9);
+            padding: 20px 40px;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-scrolled {
+            padding: 15px 40px;
+            background: rgba(0,0,0,0.95);
+        }
+        
+        .navbar-brand {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: -1px;
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            color: #ff1a25;
+            transform: scale(1.02);
+            text-shadow: var(--glow);
+        }
+        
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            min-height: 500px;
+            padding: 120px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 100%);
+        }
+        
+        .search-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 30px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.75);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: translateY(0);
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .search-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .search-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .search-subtitle {
+            color: #ccc;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            background-color: rgba(50, 50, 50, 0.7);
+            border: 1px solid rgba(100, 100, 100, 0.3);
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .form-control:focus {
+            background-color: rgba(60, 60, 60, 0.8);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3), inset 0 2px 4px rgba(0,0,0,0.2);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #e50914, #b20710);
+            border: none;
+            padding: 14px 28px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #f40612, #cf0812);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .recommendations-section {
+            padding: 70px 20px;
+            position: relative;
+        }
+        
+        .recommendations-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, var(--dark), transparent);
+            pointer-events: none;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            border-radius: 2px;
+        }
+        
+        .movie-row-container {
+            position: relative;
+            padding: 20px 0;
+        }
+        
+        .row-control {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            pointer-events: auto;
+        }
+        
+        .row-control.prev {
+            left: -15px;
+        }
+        
+        .row-control.next {
+            right: -15px;
+        }
+        
+        .movie-row-container:hover .row-control {
+            opacity: 0.8;
+        }
+        
+        .row-control:hover {
+            background: rgba(229, 9, 20, 0.7);
+            opacity: 1 !important;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .movie-row {
+            display: flex;
+            overflow-x: scroll;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            scroll-behavior: smooth;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+            gap: 20px;
+            width: 100%;
+            min-width: 100%;
+            flex-wrap: nowrap;
+        }
+        
+        .movie-card {
+            flex: 0 0 auto;
+            width: 230px;
+            margin: 0 5px;
+            background: var(--gradient-dark);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            box-shadow: var(--shadow-elevation);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .movie-card:hover {
+            transform: translateY(-15px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+            z-index: 10;
+            border-color: rgba(229, 9, 20, 0.3);
+        }
+        
+        .movie-poster {
+            position: relative;
+            overflow: hidden;
+            height: 345px;
+        }
+        
+        .movie-poster::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .movie-card:hover .movie-poster::after {
+            opacity: 1;
+        }
+        
+        .movie-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        
+        .movie-card:hover .movie-poster img {
+            transform: scale(1.1);
+            filter: brightness(1.1);
+        }
+        
+        .movie-info {
+            padding: 15px;
+            background: rgba(20, 20, 20, 0.95);
+            transform: translateY(0);
+            transition: all 0.4s ease;
+        }
+        
+        .movie-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .movie-card:hover .movie-title {
+            color: var(--primary);
+            transform: translateX(3px);
+        }
+        
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        
+        .search-link {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(3px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .movie-poster:hover .search-link {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .search-btn {
+            color: white;
+            background: linear-gradient(90deg, var(--primary), #b20710);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease 0.1s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-decoration: none;
+            display: inline-block;
+            pointer-events: auto;
+            z-index: 10;
+            position: relative;
+        }
+        
+        .search-btn:hover {
+            transform: scale(1.05);
+            background: linear-gradient(90deg, #f40612, #d00a18);
+        }
+        
+        .rating {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            color: #FFD700;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.4s ease;
+        }
+        
+        .movie-card:hover .rating {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .loading {
+            position: relative;
+            background-color: var(--light-gray);
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .loading::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+        }
+        
+        .loader .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        footer {
+            background: rgba(0,0,0,0.9);
+            padding: 30px 0;
+            text-align: center;
+            margin-top: 40px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .footer-text {
+            color: #777;
+            font-size: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        
+        @media (max-width: 768px) {
+            .search-title {
+                font-size: 2rem;
+            }
+            .movie-card {
+                width: 180px;
+            }
+            .movie-poster {
+                height: 270px;
+            }
+            .hero-section {
+                padding: 80px 10px;
+            }
+            .row-control {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-film me-2"></i>Flicksy
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section with Search -->
+    <section class="hero-section">
+        <div class="search-container">
+            <h1 class="search-title">Find Your Next Favorite Movie</h1>
+            <p class="search-subtitle">Enter a movie you love and discover amazing recommendations</p>
+            <form method="post" class="mb-4">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" list="movieOptions" name="movie" id="movie" value="{{ selected_movie }}" placeholder="Search for a movie..." required>
+                    <datalist id="movieOptions">
+                        {% for title in movie_titles %}
+                        <option value="{{ title }}">
+                        {% endfor %}
+                    </datalist>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search me-2"></i> Get Recommendations
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </section>
+
+    <!-- Recommendations Section -->
+    {% if recommended_movies %}
+    <section class="recommendations-section fade-in">
+        <div class="container">
+            <h2 class="section-title slide-up">Because you liked "{{ selected_movie }}"</h2>
+            
+            <div class="movie-row-container">
+                <div class="row-control prev" onclick="scrollMovies('left')">
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+                <div class="row-control next" onclick="scrollMovies('right')">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                
+                <div class="movie-row" id="movieRow">
+                    {% for movie in recommended_movies %}
+                    <div class="movie-card" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                        <div class="movie-poster">
+                            <img src="{{ movie.poster.img_url }}" alt="{{ movie.title }} poster" loading="lazy">
+                            <div class="rating">
+                                <i class="fas fa-star me-1"></i> Match
+                            </div>
+                            {% if movie.poster.search_url %}
+                            <div class="search-link">
+                                <a href="{{ movie.poster.search_url }}" target="_blank" class="search-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i> View Details
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="movie-info">
+                            <h5 class="movie-title">{{ movie.title }}</h5>
+                            <div class="movie-meta">
+                                <span><i class="fas fa-thumbs-up" style="color:#1ED760;"></i> Recommended</span>
+                                <span><i class="fas fa-film"></i> Similar</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- No Results/Initial State -->
+    {% if not recommended_movies and request.method == 'POST' %}
+    <div class="container mt-5 text-center fade-in">
+        <div class="p-5 rounded bg-dark">
+            <i class="fas fa-search fa-3x mb-3" style="color: var(--primary);"></i>
+            <h3>No movies found</h3>
+            <p>Try searching for another title in our database</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p class="footer-text">© 2025 MovieMatch - AI-Powered Movie Recommendations</p>
+            <p class="footer-text">© All rights reserved by M.Anees</p>
+        </div>
+    </footer>
+
+    <!-- Debug helper - Remove in production -->
+    <div style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 5px; font-size: 12px; z-index: 9999; display: none;" id="debugInfo">
+        Debug Mode
+    </div>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+        
+        // Fixed scrolling function that works in all browsers
+        function scrollMovies(direction) {
+            const movieRow = document.getElementById('movieRow');
+            
+            if (movieRow) {
+                // Get the first card to calculate its width including margins
+                const firstCard = movieRow.querySelector('.movie-card');
+                if (!firstCard) return;
+                
+                // Get the actual rendered width of a card with margins
+                const cardStyle = window.getComputedStyle(firstCard);
+                const cardWidth = firstCard.offsetWidth + 
+                                  parseInt(cardStyle.marginLeft) + 
+                                  parseInt(cardStyle.marginRight);
+                
+                // Calculate scroll amount - move by 2 cards at a time
+                const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2;
+                
+                // Current scroll position
+                const currentScroll = movieRow.scrollLeft;
+                
+                // Calculate new position
+                const newPosition = currentScroll + scrollAmount;
+                
+                // Animate the scroll
+                movieRow.scrollTo({
+                    left: newPosition,
+                    behavior: 'smooth'
+                });
+                
+                // Show a debug message
+                showDebugMessage(`Scrolling ${direction}: ${scrollAmount}px from ${currentScroll} to ${newPosition}`);
+                
+                // Force a reflow to ensure scroll takes effect
+                void movieRow.offsetHeight;
+            }
+        }
+        
+        // On DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make scroll buttons more visible and properly positioned
+            const prevButton = document.querySelector('.row-control.prev');
+            const nextButton = document.querySelector('.row-control.next');
+            
+            if (prevButton && nextButton) {
+                // Make buttons more prominent
+                prevButton.style.opacity = "0.8";
+                nextButton.style.opacity = "0.8";
+                
+                // Make sure clicking anywhere on the button works
+                prevButton.addEventListener('click', function() {
+                    scrollMovies('left');
+                    showDebugMessage("Previous button clicked");
+                });
+                
+                nextButton.addEventListener('click', function() {
+                    scrollMovies('right');
+                    showDebugMessage("Next button clicked");
+                });
+                
+                // Also make the icons inside clickable
+                prevButton.querySelector('i').addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent double triggering
+                    scrollMovies('left');
+                    showDebugMessage("Previous icon clicked");
+                });
+                
+                nextButton.querySelector('i').addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent double triggering
+                    scrollMovies('right');
+                    showDebugMessage("Next icon clicked");
+                });
+            }
+            
+            // Add additional nudge helper to make buttons more visible
+            setTimeout(function() {
+                const controls = document.querySelectorAll('.row-control');
+                controls.forEach(function(control) {
+                    control.style.transform = control.style.transform + ' scale(1.2)';
+                    setTimeout(() => {
+                        control.style.transform = control.style.transform.replace(' scale(1.2)', '');
+                    }, 500);
+                });
+            }, 2000);
+            
+            // Check if there's enough content to scroll
+            const movieRow = document.getElementById('movieRow');
+            if (movieRow) {
+                if (movieRow.scrollWidth <= movieRow.clientWidth) {
+                    showDebugMessage("Not enough content to scroll horizontally");
+                    document.querySelectorAll('.row-control').forEach(btn => {
+                        btn.style.display = 'none'; // Hide buttons if no scrolling needed
+                    });
+                }
+            }
+        });
+        
+        // Debug helper function
+        function showDebugMessage(message, duration = 3000) {
+            const debugElement = document.getElementById('debugInfo');
+            debugElement.style.display = 'block';
+            debugElement.innerText = message;
+            
+            setTimeout(() => {
+                debugElement.style.display = 'none';
+            }, duration);
+        }
+    </script>
+</body>
+</html>

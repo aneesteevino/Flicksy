@@ -1,0 +1,7 @@
+"# Data files - not tracked" 
+"tmdb_5000_movies.csv" 
+"tmdb_5000_credits.csv" 
+"*.pkl" 
+"*.csv" 
+"__pycache__/" 
+"*.pyc" 
